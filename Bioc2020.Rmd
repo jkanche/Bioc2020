@@ -10,19 +10,26 @@ vignette: >
   %\usepackage[UTF-8]{inputenc}
 ---
 
-The `epivizrChart` package is an R interface to the Epiviz component library. This allows users to create interactive charts to visualize and explore bioconductor data objects in RMarkdown and shiny applications. [Epiviz Web components](https://github.com/epiviz/epiviz-chart) are built using the Google [Polymer](https://www.polymer-project.org/) library. This vignette demonstrates the use of the visualization components in RMarkdown documents.
+The `epivizrChart` package is an R interface to the [Epiviz Web components](https://github.com/epiviz/epiviz-chart). This allows users to create interactive charts to visualize and explore bioconductor data objects in RMarkdown and shiny applications. [Epiviz Web components](https://github.com/epiviz/epiviz-chart) are built using the Google [Polymer](https://www.polymer-project.org/) library. This vignette demonstrates the use of the visualization components in RMarkdown documents.
 
-```{r setup, eval=TRUE, include=FALSE}
+```{r setup, eval=TRUE, include=TRUE}
 library(epivizrChart)
 library(antiProfilesData)
+library(Homo.sapiens)
+```
+
+```{r setup2, eval=TRUE, include=FALSE}
+# do we need these imports?
 library(SummarizedExperiment)
 library(RColorBrewer)
-library(Homo.sapiens)
 library(AnnotationHub)
 library(GenomicRanges)
 ```
 
-Sample data sets we will be using for the vignette.
+We will use example data from the TCGA colorectal cancer dataset. Data is described in the 
+`epivizrChart` package help pages. We also include gene expression data from the Gene Expression Barcode project.
+That data is described in the `antiProfilesData` package help pages.
+
 ```{r}
 data(tcga_colon_blocks)
 data(tcga_colon_curves)
@@ -30,11 +37,11 @@ data(tcga_colon_expression)
 data(apColonData)
 ```
 
-# Visualizing Bioconductor data types
+# Visualizing Bioconductor data objects
 
-`epivizrChart` supports various bioconductor data types for ex: Genomic Ranges, ExpressionSet, SummarizedExperiment etc. The package automatically infers a chart type to visualize the data from these objects. 
+`epivizrChart` supports various Bioconductor infrastructure data types for ex: Genomic Ranges, ExpressionSet, OrganismDb, SummarizedExperiment etc. The package automatically infers an appropriate chart to visualize the data from these objects based on the object's type. 
 
-For example, to visualize hg19 reference genome as a genes track at a particular genomic location (`chr`, `start`, `end`)
+For example, we can use a genes track to visualize gene models for the hg19 reference genome as stored in the `Homo.sapiens` OrganismDb package. 
 
 ```{r}
 library(Homo.sapiens)
@@ -43,7 +50,7 @@ genes_track <- epivizChart(Homo.sapiens, chr="chr11", start=118000000, end=12100
 genes_track
 ```
 
-Users also have an option to use a specific chart type using the the `chart` parameter. A complete list of supported visualizations is available on the [Epiviz Component Library](https://epiviz.github.io/components/)
+We can also specify a chart type using the the `chart` parameter. A complete list of supported visualizations is available on the [Epiviz Component Library](https://epiviz.github.io/components/) documentation.
 
 ```{r}
 scatter_plot <- epivizChart(tcga_colon_curves, chr="chr11", start=99800000, end=103383180, type="bp", columns=c("cancerMean","normalMean"), chart="ScatterPlot")
@@ -52,16 +59,16 @@ scatter_plot
 
 # Compose custom genome viewers
 
-In addition to visualizing data, `epivizrChart` allows users to quickly compose custom genome viewers for their data This allows users to incorporate interactive data exploration in their analysis workflows. We provide a couple of ways to compose custom genome viewers and various interactions between these components. 
+In addition to creating single visualizations, `epivizrChart` allows users to quickly compose custom genome viewers for their data that link multiple interactive charts. This allows users to incorporate interactive data exploration in their analysis workflows. We provide a couple of ways to compose custom genome viewers and various interactions between these components. 
 
 ## Visualizing data across the entire Genome (Epiviz Environment)
 
-To enable this, we built the `epiviz-environment` that visualizes data across the entire genome. An example use case would be to explore gene expression patterns across conditions (tumour vs normal etc) or tissue types. To visualize data genome wide - 
+The `epiviz-environment` component can be used to visualize genome-wide data. An example use case would be to explore gene expression patterns across conditions (tumour vs normal etc) or tissue types. 
 
 ```{r, message=FALSE}
 epivizEnv <- epivizEnv()
 
-blocks_track <- epivizEnv$plot(tcga_colon_curves, type="bp", columns=c("cancerMean","normalMean"), chart="ScatterPlot")
+methScatterPlot <- epivizEnv$plot(tcga_colon_curves, type="bp", columns=c("cancerMean","normalMean"), chart="ScatterPlot")
 
 epivizEnv
 ```
@@ -83,9 +90,9 @@ epivizNav
 
 # Using Interactive Mode
 
-So far, we've seen how to add charts and static viewers. This section explores interactive viewers using `epivizrChart`. 
+So far, we've seen how to add charts in static documents. This section explores interactive viewers using `epivizrChart`. 
 The interactive mode takes advantage of the websocket protocol to create an active connection between the R-session and the epiviz components. 
-In interactive mode, data is not embedded along with the components, So the charts make data requests to the R-session through the websocket connection to get data. 
+In interactive mode, data is not embedded along with the components, so the charts make data requests to the R-session through the websocket connection to get data. 
 
 To use charts in `interactive` mode, first we create an epiviz environment with interactive mode enabled. 
 
@@ -98,11 +105,12 @@ epivizEnv <- epivizNav(chr="chr11", start=118000000, end=121000000, interactive=
 
 ```
 
-We then create an instance of an `epivizrServer` to manage websocket connections. The register_all_the_epiviz_things adds listeners and handlers to manage data requests.
+We then create an instance of an `epivizrServer` to manage websocket connections. The register_all_the_epiviz_things adds listeners and handlers to manage data requests from charts included in the epiviz environment.
 
 ```{r, eval=FALSE}
 library(epivizrServer)
 
+# remove these two imports right?
 library(Homo.sapiens)
 data(tcga_colon_blocks)
 
