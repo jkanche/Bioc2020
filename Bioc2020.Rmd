@@ -18,14 +18,6 @@ library(antiProfilesData)
 library(Homo.sapiens)
 ```
 
-```{r setup2, eval=TRUE, include=FALSE}
-# do we need these imports?
-library(SummarizedExperiment)
-library(RColorBrewer)
-library(AnnotationHub)
-library(GenomicRanges)
-```
-
 We will use example data from the TCGA colorectal cancer dataset. Data is described in the 
 `epivizrChart` package help pages. We also include gene expression data from the Gene Expression Barcode project.
 That data is described in the `antiProfilesData` package help pages.
@@ -101,7 +93,8 @@ To use charts in `interactive` mode, first we create an epiviz environment with 
 library(epivizrChart)
 
 # initialize environment
-epivizEnv <- epivizNav(chr="chr11", start=118000000, end=121000000, interactive=TRUE)
+epivizEnv <- epivizEnv(chr="chr11", start=98000000, end=130000000, interactive=TRUE, shiny=FALSE)
+methScatterPlot <- epivizEnv$plot(tcga_colon_curves, type="bp", columns=c("cancerMean","normalMean"), chart="ScatterPlot")
 
 ```
 
@@ -127,12 +120,19 @@ server$start_server()
 We now have an epiviz environment and an active websocket connection to the R-session. Adding and managing charts is exactly the same as described earlier.
 
 ```{r, eval=FALSE}
-# plot charts
-blocks_track <- epivizEnv$plot(tcga_colon_blocks, datasource_name="450kMeth")
-epivizEnv
 
-genes <- epivizEnv$plot(Homo.sapiens)
+epivizNav <- epivizNav(chr="chr11", start=118000000, end=121000000, parent=epivizEnv)
+
+# epivizNav <- epivizEnv$init_region(chr="chr11", interactive=TRUE, shiny=FALSE, start=119819400, end=120150600)
+
+# plot charts
+blocks_track <- epivizNav$plot(tcga_colon_blocks, datasource_name="450kMeth")
+genes <- epivizNav$plot(Homo.sapiens)
+# methScatterPlot <- epivizNav$plot(tcga_colon_curves, type="bp", columns=c("cancerMean","normalMean"), chart="ScatterPlot")
+
+
 epivizEnv
+# epivizNav
 ```
 
 Finally close the server
